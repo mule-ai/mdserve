@@ -1,0 +1,19 @@
+# Binaries
+md-serve
+md-serve-*
+
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
