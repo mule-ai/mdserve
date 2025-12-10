@@ -118,11 +118,108 @@ func (s *Server) handleDocumentView(w http.ResponseWriter, r *http.Request) {
     <title>%s</title>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --background-color: #ffffff;
+            --text-color: #212529;
+            --link-color: #0d6efd;
+            --border-color: #dee2e6;
+        }
+
+        .dark-mode {
+            --background-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --link-color: #6ea8fe;
+            --border-color: #495057;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        a {
+            color: var(--link-color);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
+    </style>
 </head>
 <body>
+    <div class="theme-toggle">
+        <button id="themeToggle" class="btn btn-sm btn-outline-secondary" title="Toggle theme">
+            <span id="themeIcon">🌙</span>
+        </button>
+    </div>
+
     <div class="container mt-4">
         <div class="mt-4">%s</div>
     </div>
+
+    <script>
+        // Function to set theme
+        function setTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('themeIcon').textContent = '☀️';
+            } else {
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+                document.getElementById('themeIcon').textContent = '🌙';
+            }
+        }
+
+        // Function to detect system theme
+        function detectSystemTheme() {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                return 'dark';
+            } else {
+                return 'light';
+            }
+        }
+
+        // Initialize theme
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                setTheme(savedTheme);
+            } else {
+                // Follow system theme by default
+                setTheme(detectSystemTheme());
+            }
+        }
+
+        // Toggle theme
+        function toggleTheme() {
+            if (document.body.classList.contains('dark-mode')) {
+                setTheme('light');
+            } else {
+                setTheme('dark');
+            }
+        }
+
+        // Set up event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+            // Listen for system theme changes
+            if (window.matchMedia) {
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+                    // Only change theme automatically if user hasn't manually set a theme
+                    if (!localStorage.getItem('theme')) {
+                        setTheme(e.matches ? 'dark' : 'light');
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>`, path, htmlContent)
 	
