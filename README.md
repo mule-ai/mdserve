@@ -68,7 +68,7 @@ curl "http://localhost:8080/api/document?filename=README"
 
 Create a new document:
 ```bash
-curl -X POST http://localhost:8080/api/documents -d "filename=mydoc&content=# My Document%0A%0AThis is my document."
+curl -X POST http://localhost:8080/api/documents -H "Content-Type: application/json" -d '{"filename":"mydoc","content":"# My Document\n\nThis is my document."}'
 ```
 
 Response (JSON):

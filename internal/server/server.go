@@ -259,7 +259,7 @@ func (s *Server) showIndex(w http.ResponseWriter, r *http.Request) {
         <div class="row mt-4">
             <div class="col-md-6">
                 <h2>Create Document</h2>
-                <form hx-post="/api/documents" hx-target="#result">
+                <form id="createForm">
                     <div class="mb-3">
                         <label for="filename" class="form-label">Filename (without .md extension)</label>
                         <input type="text" class="form-control" id="filename" name="filename" required>
@@ -268,7 +268,13 @@ func (s *Server) showIndex(w http.ResponseWriter, r *http.Request) {
                         <label for="content" class="form-label">Content</label>
                         <textarea class="form-control" id="content" name="content" rows="10" required></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Create Document</button>
+                    <button type="submit" class="btn btn-primary"
+                            hx-post="/api/documents"
+                            hx-target="#result"
+                            hx-vals="js:{filename: document.getElementById('filename').value, content: document.getElementById('content').value}"
+                            hx-headers='{"Content-Type": "application/json"}'>
+                        Create Document
+                    </button>
                 </form>
                 <div id="result" class="mt-3"></div>
             </div>
@@ -281,6 +287,32 @@ func (s *Server) showIndex(w http.ResponseWriter, r *http.Request) {
             </div>
         </div>
     </div>
+
+    <script>
+        // Handle form submission with JSON payload
+        document.getElementById('createForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent default form submission
+
+            const filename = document.getElementById('filename').value;
+            const content = document.getElementById('content').value;
+
+            // Send JSON request using htmx
+            htmx.ajax('POST', '/api/documents', {
+                target: '#result',
+                swap: 'innerHTML',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                values: {
+                    filename: filename,
+                    content: content
+                }
+            }).then(function() {
+                // Clear form after successful submission
+                document.getElementById('createForm').reset();
+            });
+        });
+    </script>
 </body>
 </html>`, docList)
 
@@ -321,9 +353,22 @@ func (s *Server) getDocument(w http.ResponseWriter, r *http.Request) {
 	w.Write(content)
 }
 
+// DocumentRequest represents the JSON structure for creating a document
+type DocumentRequest struct {
+	Filename string `json:"filename"`
+	Content  string `json:"content"`
+}
+
 func (s *Server) createDocument(w http.ResponseWriter, r *http.Request) {
-	filename := r.FormValue("filename")
-	content := r.FormValue("content")
+	// Parse JSON request body
+	var req DocumentRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON format: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	filename := req.Filename
+	content := req.Content
 
 	if filename == "" {
 		http.Error(w, "filename is required", http.StatusBadRequest)
